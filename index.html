@@ -5,13 +5,22 @@
     <script type="text/javascript">(function () { var e = false; var c = window; var t = document; function r() { if (!c.frames["__uspapiLocator"]) { if (t.body) { var a = t.body; var e = t.createElement("iframe"); e.style.cssText = "display:none"; e.name = "__uspapiLocator"; a.appendChild(e) } else { setTimeout(r, 5) } } } r(); function p() { var a = arguments; __uspapi.a = __uspapi.a || []; if (!a.length) { return __uspapi.a } else if (a[0] === "ping") { a[2]({ gdprAppliesGlobally: e, cmpLoaded: false }, true) } else { __uspapi.a.push([].slice.apply(a)) } } function l(t) { var r = typeof t.data === "string"; try { var a = r ? JSON.parse(t.data) : t.data; if (a.__cmpCall) { var n = a.__cmpCall; c.__uspapi(n.command, n.parameter, function (a, e) { var c = { __cmpReturn: { returnValue: a, success: e, callId: n.callId } }; t.source.postMessage(r ? JSON.stringify(c) : c, "*") }) } } catch (a) { } } if (typeof __uspapi !== "function") { c.__uspapi = p; __uspapi.msgHandler = l; c.addEventListener("message", l, false) } })();</script>
 
     <script>
-      // Trying that just after the stub.
+
+      // Where the callbacks receiving the CCPA string will live
+      window._gu_ccpa = { onConsent: [] };
+      
       function fetchUSPdata(){
           // query getUSPData
           if( window.__uspapi ){
               window.__uspapi('getUSPData', 2,
                               (uspData, success) => {
-                                  console.log("getUSPData: ", uspData,success);
+                                  // console.log("getUSPData: ", uspData,success);
+                                  if( success ){
+                                      // Activate the callbacks.
+                                      window._gu_ccpa.onConsent.forEach( (cb) => {
+                                          cb(uspData.uspString);
+                                      });
+                                  }
                               });
           }else{
               console.log("No __uspapi :/");
@@ -23,10 +32,6 @@
     <!-- Our config -->
     <script>
       var accountId = 1257;
-      var genericCallback = function(eName){
-          return function(){ console.log("CALLBACK "+ eName + " WITH:" , arguments); };
-      }
-      
 
       // Callbacks from https://documentation.sourcepoint.com/web-implementation/sourcepoint-set-up-and-configuration-v2/optional-callbacks
       // Events when we know about the consent
@@ -36,6 +41,9 @@
       var events = {};
 
       /* Not needed unless you want to better understand all the events.
+      var genericCallback = function(eName){
+           return function(){ console.log("CALLBACK "+ eName + " WITH:" , arguments); };
+      }
       var callbackEvents = ['onMessageReady','onMessageChoiceSelect',
                             'onMessageReceiveData','onMessageChoiceError',
                             'onPrivacyManagerAction','onConsentReady', 'onPMCancel',
@@ -48,7 +56,7 @@
       // The specific events where the consent can change.
       ['onMessageChoiceSelect','onConsentReady'].forEach( (eName) => {
           events[eName] = function(){
-              console.log("CONSENT CHANGING OR INFO EVENT " + eName );
+              // console.log("CONSENT CHANGED OR INFO EVENT " + eName );
               setTimeout(fetchUSPdata, 1); // Make that asynchronous to guarantee having the right data right after a reject.
           };
       });
@@ -75,11 +83,77 @@
 
     <!-- Sourcepoint call code -->
     <script src="https://ccpa.sp-prod.net/ccpa.js"></script>
+
+    <!-- Now for the guardian glue -->
+    <script>
+
+      // Wrap onIabConsentNotification
+      // Note: you might want to rename that as not everything is Iab maybe?
+      function onIabConsentNotification(callback){
+          if( false ){ // Replace false with '! ccpaInUse' or something similar.
+              // Insert standard subscription to TCFv1 consent notification here.
+          }else{
+              // The sourcepoint CCPA case.
+              window._gu_ccpa.onConsent.push(function(ccpaString){
+                  // console.log("Got ccpaString = " + ccpaString);
+                  // Check here for string meaning: https://github.com/InteractiveAdvertisingBureau/USPrivacy/blob/master/CCPA/US%20Privacy%20String.md
+                  if( ccpaString.match(/^2.Y/gi) ){
+                      // Opt-out => 
+                      // Simulate denied consent to all purposes like in TCFv1 (in case
+                      // we want to avoid refactor)
+                      callback( [false, false, false, false, false, false] );
+                  }else{
+                      // No optout. Consent is assumed (YaY CCPA!)
+                      callback( [true, true, true, true, true, true] );
+                  }
+              });
+          }
+          
+      }
+
+      function onGuConsentNotification(purpose, callback ){
+          if( false ){
+              // Insert standard subscription to our TCFv1 notif.
+          }else{
+              // Sourcepoint CCPA case.
+              window._gu_ccpa.onConsent.push(function(ccpaString){
+                  // console.log("Got ccpaString = " + ccpaString);
+                  // Check here for string meaning: https://github.com/InteractiveAdvertisingBureau/USPrivacy/blob/master/CCPA/US%20Privacy%20String.md
+                  if( ccpaString.match(/^2.Y/gi) ){
+                      // Opt-out. Consent is denied regardless of purpose. (only one purpose in CCPA anyway)
+                      callback(false);
+                  }else{
+                      // No optout. Consent is assumed (YaY CCPA!)
+                      callback(true);
+                  }
+              });
+
+          }
+      }
+      
+    </script>
+
+
+    <script>
+      // Consuming code.
+
+      // Examples taken from third-party-tags.js (in frontend/commercial code).
+      onGuConsentNotification('performance' , granted => {
+          console.log("User granted 'performance' (TCFv1 Spoofed from CCPA) = " , granted );
+      });
+      
+      onIabConsentNotification( purposeStates => {
+          console.log("User granted AIB purposes (TCFv1 spoofed from CCPA) = ", purposeStates );
+      });
+
+      
+      
+    </script>
     
   </head>
   <body>
     
-    <h1>Hello CCPA world</h1>
+    <h1>Hello Brave CCPA world</h1>
     
     <p>
       <em>Note: Clear all this domain cookies to see the CCPA message banner again.</em>
