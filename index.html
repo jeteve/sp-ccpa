@@ -54,15 +54,26 @@
       });
       */
       // The specific events where the consent can change.
-      ['onMessageChoiceSelect','onConsentReady'].forEach( (eName) => {
-          events[eName] = function(){
-              // console.log("CONSENT CHANGED OR INFO EVENT " + eName );
 
-              // Wait until the current event is fully handled
-              // to guarantee having the right data right after a rejectall/acceptall event.
+      // See https://documentation.sourcepoint.com/web-implementation/sourcepoint-set-up-and-configuration-v2/optional-callbacks
+      events['onMessageChoiceSelect'] = function(choice_id, choice_type_id){
+          // Only consider acceptAll (11) or rejectAll(13).
+          // Note that the action of saving from the privacy manager triggeras the onConsentReady instead.
+          // console.log("RECEIVED onMessageChoiceSelect with choice_type_id = " + choice_type_id);
+          if( choice_type_id === 11 ||
+              choice_type_id === 13
+            ){
               setTimeout(fetchUSPdata, 0);
-          };
-      });
+          }
+      };
+      
+      events['onConsentReady'] = function(){
+          // onConsentReady is on the page load if the user has made a choice already
+          // or on save from the privacy manager.          
+          // Wait until the current event is fully handled
+          // to guarantee having the right data right after a rejectall/acceptall event.
+          setTimeout(fetchUSPdata, 0);
+      };
       
       
       window._sp_ccpa = {
