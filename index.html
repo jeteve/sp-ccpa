@@ -63,17 +63,17 @@
           var events = {};
 
           // Not needed unless you want to better understand all the events.
-           var genericCallback = function(eName){
-           return function(){ console.log("CALLBACK "+ eName + " WITH:" , arguments); };
-           }
-           var callbackEvents = ['onMessageReady','onMessageChoiceSelect',
-           'onMessageReceiveData','onMessageChoiceError',
-           'onPrivacyManagerAction','onConsentReady', 'onPMCancel',
-           'onSPPMObjectReady'];
-           // Generic event handling
-           callbackEvents.forEach( (eName) => {
-           events[eName] = genericCallback( eName );
-           });
+          var genericCallback = function(eName){
+              return function(){ console.log("CALLBACK "+ eName + " WITH:" , arguments); };
+          }
+          var callbackEvents = ['onMessageReady','onMessageChoiceSelect',
+                                'onMessageReceiveData','onMessageChoiceError',
+                                'onPrivacyManagerAction','onConsentReady', 'onPMCancel',
+                                'onSPPMObjectReady'];
+          // Generic event handling
+          //callbackEvents.forEach( (eName) => {
+          //    events[eName] = genericCallback( eName );
+          //});
           //
           // The specific events where the consent can change.
           // See https://documentation.sourcepoint.com/web-implementation/sourcepoint-set-up-and-configuration-v2/optional-callbacks
