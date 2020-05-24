@@ -57,7 +57,10 @@
       ['onMessageChoiceSelect','onConsentReady'].forEach( (eName) => {
           events[eName] = function(){
               // console.log("CONSENT CHANGED OR INFO EVENT " + eName );
-              setTimeout(fetchUSPdata, 1); // Make that asynchronous to guarantee having the right data right after a reject.
+
+              // Wait until the current event is fully handled
+              // to guarantee having the right data right after a rejectall/acceptall event.
+              setTimeout(fetchUSPdata, 0);
           };
       });
       
