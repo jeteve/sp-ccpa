@@ -4,13 +4,9 @@
     <script>
       // Shamelessly copied utilities from SO:
       function deleteAllCookies() {
-          var cookies = document.cookie.split(";");
-          for (var i = 0; i < cookies.length; i++) {
-              var cookie = cookies[i];
-              var eqPos = cookie.indexOf("=");
-              var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-              document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
-          }
+          document.cookie.split(";").forEach(function(c) {
+              document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+          });
       }
       function insertScript(url){
           var script = document.createElement('script');
@@ -85,7 +81,7 @@
           events['onMessageChoiceSelect'] = function(choice_id, choice_type_id){
               // Only consider acceptAll (11) or rejectAll(13).
               // Note that the action of saving from the privacy manager triggeras the onConsentReady instead.
-              // console.log("RECEIVED onMessageChoiceSelect with choice_type_id = " + choice_type_id);
+              console.log("RECEIVED onMessageChoiceSelect with choice_type_id = " + choice_type_id);
               if( choice_type_id === 11 ||
                   choice_type_id === 13
                 ){
@@ -94,6 +90,7 @@
           };
       
           events['onConsentReady'] = function(){
+              console.log("RECEIVED onConsentReady");
               // onConsentReady is on the page load if the user has made a choice already
               // or on save from the privacy manager.          
               // Wait until the current event is fully handled
