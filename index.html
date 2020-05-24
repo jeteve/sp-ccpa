@@ -1,14 +1,34 @@
 <html>
   <head>
 
-    <!-- sourcepoint stub . See https://documentation.sourcepoint.com/web-implementation/sourcepoint-setup-and-ccpa-configuration -->
-    <script type="text/javascript">(function () { var e = false; var c = window; var t = document; function r() { if (!c.frames["__uspapiLocator"]) { if (t.body) { var a = t.body; var e = t.createElement("iframe"); e.style.cssText = "display:none"; e.name = "__uspapiLocator"; a.appendChild(e) } else { setTimeout(r, 5) } } } r(); function p() { var a = arguments; __uspapi.a = __uspapi.a || []; if (!a.length) { return __uspapi.a } else if (a[0] === "ping") { a[2]({ gdprAppliesGlobally: e, cmpLoaded: false }, true) } else { __uspapi.a.push([].slice.apply(a)) } } function l(t) { var r = typeof t.data === "string"; try { var a = r ? JSON.parse(t.data) : t.data; if (a.__cmpCall) { var n = a.__cmpCall; c.__uspapi(n.command, n.parameter, function (a, e) { var c = { __cmpReturn: { returnValue: a, success: e, callId: n.callId } }; t.source.postMessage(r ? JSON.stringify(c) : c, "*") }) } } catch (a) { } } if (typeof __uspapi !== "function") { c.__uspapi = p; __uspapi.msgHandler = l; c.addEventListener("message", l, false) } })();</script>
+    <script>
+      // Shamelessly copied utilities from SO:
+      function deleteAllCookies() {
+          var cookies = document.cookie.split(";");
+          for (var i = 0; i < cookies.length; i++) {
+              var cookie = cookies[i];
+              var eqPos = cookie.indexOf("=");
+              var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+              document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          }
+      }
+      function insertScript(url){
+          var script = document.createElement('script');
+          script.src = url;
+          script.async = true;
+          document.head.appendChild(script);
+      }
+    </script>
+
+    <!-- general TCFv2 sourcepoint stub (see https://documentation.sourcepoint.com/web-implementation/sourcepoint-gdpr-and-tcf-v2-support-beta/gdpr-and-tcf-v2-setup-and-configuration ) -->
+    <!-- <script type="text/javascript">
+      !function () { var e = function () { var e, t = "__tcfapiLocator", a = [], n = window; for (; n;) { try { if (n.frames[t]) { e = n; break } } catch (e) { } if (n === window.top) break; n = n.parent } e || (!function e() { var a = n.document, r = !!n.frames[t]; if (!r) if (a.body) { var i = a.createElement("iframe"); i.style.cssText = "display:none", i.name = t, a.body.appendChild(i) } else setTimeout(e, 5); return !r }(), n.__tcfapi = function () { for (var e, t = arguments.length, n = new Array(t), r = 0; r < t; r++)n[r] = arguments[r]; if (!n.length) return a; if ("setGdprApplies" === n[0]) n.length > 3 && 2 === parseInt(n[1], 10) && "boolean" == typeof n[3] && (e = n[3], "function" == typeof n[2] && n[2]("set", !0)); else if ("ping" === n[0]) { var i = { gdprApplies: e, cmpLoaded: !1, cmpStatus: "stub" }; "function" == typeof n[2] && n[2](i) } else a.push(n) }, n.addEventListener("message", (function (e) { var t = "string" == typeof e.data, a = {}; try { a = t ? JSON.parse(e.data) : e.data } catch (e) { } var n = a.__tcfapiCall; n && window.__tcfapi(n.command, n.version, (function (a, r) { var i = { __tcfapiReturn: { returnValue: a, success: r, callId: n.callId } }; t && (i = JSON.stringify(i)), e.source.postMessage(i, "*") }), n.parameter) }), !1)) }; "undefined" != typeof module ? module.exports = e : e() }();
+    </script> -->
+    
 
     <script>
-
       // Where the callbacks receiving the CCPA string will live
       window._gu_ccpa = { onConsent: [] };
-      
       function fetchUSPdata(){
           // query getUSPData
           if( window.__uspapi ){
@@ -26,68 +46,85 @@
               console.log("No __uspapi :/");
           }
       }
+
     </script>
 
     
     <!-- Our config -->
     <script>
+      var consentType = 'ccpa';
+      
       var accountId = 1257;
 
-      // Callbacks from https://documentation.sourcepoint.com/web-implementation/sourcepoint-set-up-and-configuration-v2/optional-callbacks
-      // Events when we know about the consent
-      // onMessageChoiceSelect , onConsentReady
+      function setupCCPA(){
+          // sourcepoint ccpa stub . See https://documentation.sourcepoint.com/web-implementation/sourcepoint-setup-and-ccpa-configuration
+          (function () { var e = false; var c = window; var t = document; function r() { if (!c.frames["__uspapiLocator"]) { if (t.body) { var a = t.body; var e = t.createElement("iframe"); e.style.cssText = "display:none"; e.name = "__uspapiLocator"; a.appendChild(e) } else { setTimeout(r, 5) } } } r(); function p() { var a = arguments; __uspapi.a = __uspapi.a || []; if (!a.length) { return __uspapi.a } else if (a[0] === "ping") { a[2]({ gdprAppliesGlobally: e, cmpLoaded: false }, true) } else { __uspapi.a.push([].slice.apply(a)) } } function l(t) { var r = typeof t.data === "string"; try { var a = r ? JSON.parse(t.data) : t.data; if (a.__cmpCall) { var n = a.__cmpCall; c.__uspapi(n.command, n.parameter, function (a, e) { var c = { __cmpReturn: { returnValue: a, success: e, callId: n.callId } }; t.source.postMessage(r ? JSON.stringify(c) : c, "*") }) } } catch (a) { } } if (typeof __uspapi !== "function") { c.__uspapi = p; __uspapi.msgHandler = l; c.addEventListener("message", l, false) } })();
+          
+          // Callbacks from https://documentation.sourcepoint.com/web-implementation/sourcepoint-set-up-and-configuration-v2/optional-callbacks
+          // Events when we know about the consent
+          // onMessageChoiceSelect , onConsentReady
+          // The callback settings for the config
+          var events = {};
 
-      // The callback settings for the config
-      var events = {};
-
-      /* Not needed unless you want to better understand all the events.
-      var genericCallback = function(eName){
+          /* Not needed unless you want to better understand all the events.
+           var genericCallback = function(eName){
            return function(){ console.log("CALLBACK "+ eName + " WITH:" , arguments); };
-      }
-      var callbackEvents = ['onMessageReady','onMessageChoiceSelect',
-                            'onMessageReceiveData','onMessageChoiceError',
-                            'onPrivacyManagerAction','onConsentReady', 'onPMCancel',
-                            'onSPPMObjectReady'];
-      // Generic event handling
+           }
+           var callbackEvents = ['onMessageReady','onMessageChoiceSelect',
+           'onMessageReceiveData','onMessageChoiceError',
+           'onPrivacyManagerAction','onConsentReady', 'onPMCancel',
+           'onSPPMObjectReady'];
+           // Generic event handling
       callbackEvents.forEach( (eName) => {
-          events[eName] = genericCallback( eName );
+      events[eName] = genericCallback( eName );
       });
-      */
-      // The specific events where the consent can change.
-      ['onMessageChoiceSelect','onConsentReady'].forEach( (eName) => {
-          events[eName] = function(){
-              // console.log("CONSENT CHANGED OR INFO EVENT " + eName );
-
-              // Wait until the current event is fully handled
-              // to guarantee having the right data right after a rejectall/acceptall event.
-              setTimeout(fetchUSPdata, 0);
+          */
+          // The specific events where the consent can change.
+          ['onMessageChoiceSelect','onConsentReady'].forEach( (eName) => {
+              events[eName] = function(){
+                  // console.log("CONSENT CHANGED OR INFO EVENT " + eName );
+                  // Wait until the current event is fully handled
+                  // to guarantee having the right data right after a rejectall/acceptall event.
+                  setTimeout(fetchUSPdata, 0);
+              };
+          });
+      
+          window._sp_ccpa = {
+              config: {
+                  mmsDomain: 'https://message.sp-prod.net',
+                  ccpaOrigin: 'https://ccpa-service.sp-prod.net',
+                  accountId,
+                  getDnsMsgMms: true,
+                  alwaysDisplayDns: false,
+                  siteHref: 'http://theguardian.eteve.net',
+                  events,
+              },
           };
-      });
-      
-      
-      window._sp_ccpa = {
-          config: {
-              mmsDomain: 'https://message.sp-prod.net',
-              ccpaOrigin: 'https://ccpa-service.sp-prod.net',
-              accountId,
-              getDnsMsgMms: true,
-              alwaysDisplayDns: false,
-              siteHref: 'http://theguardian.eteve.net',
-              events,
-          },
-      };
 
+          insertScript('https://ccpa.sp-prod.net/ccpa.js');
+      }
 
       function showPM(){
-          window._sp_ccpa.loadPrivacyManagerModal(null, '5eba7ef78c167c47ca8b433d');
+          if( consentType === 'ccpa' ){
+              window._sp_ccpa.loadPrivacyManagerModal(null, '5eba7ef78c167c47ca8b433d');
+          }
+      }
+
+
+      // Instanciate the right consentType.
+      if( consentType === 'ccpa' ){
+          setupCCPA();
       }
       
     </script>
 
-    <!-- Sourcepoint call code -->
-    <script src="https://ccpa.sp-prod.net/ccpa.js"></script>
 
-    <!-- Now for the guardian glue -->
+    <!-- Sourcepoint TCFv2 call code -->
+    <!-- <script src="https://gdpr-tcfv2.sp-prod.net/wrapperMessagingWithoutDetection.js"></script> -->
+    <!-- Sourcepoint ccpa call code -->
+    <!-- <script src="https://ccpa.sp-prod.net/ccpa.js"></script> -->
+
+    <!-- And now, the guardian glue -->
     <script>
 
       // Wrap onIabConsentNotification
@@ -95,7 +132,7 @@
       function onIabConsentNotification(callback){
           if( false ){ // Replace false with '! ccpaInUse' or something similar.
               // Insert standard subscription to TCFv1 consent notification here.
-          }else{
+          }else if( consentType === 'ccpa' ){
               // The sourcepoint CCPA case.
               window._gu_ccpa.onConsent.push(function(ccpaString){
                   // console.log("Got ccpaString = " + ccpaString);
@@ -110,6 +147,8 @@
                       callback( [true, true, true, true, true, true] );
                   }
               });
+          }else{
+              throw new Error("Unknown consent type");
           }
           
       }
@@ -117,7 +156,7 @@
       function onGuConsentNotification(purpose, callback ){
           if( false ){
               // Insert standard subscription to our TCFv1 notif.
-          }else{
+          }else if( consentType === 'ccpa' ){
               // Sourcepoint CCPA case.
               window._gu_ccpa.onConsent.push(function(ccpaString){
                   // console.log("Got ccpaString = " + ccpaString);
@@ -131,6 +170,8 @@
                   }
               });
 
+          }else{
+              throw new Error("Unknown consent type");
           }
       }
       
@@ -143,16 +184,14 @@
       // Examples taken from third-party-tags.js (in frontend/commercial code).
       onGuConsentNotification('performance' , granted => {
           console.log("User granted 'performance' (TCFv1 Spoofed from CCPA) = " , granted );
+          
       });
       
       onIabConsentNotification( purposeStates => {
           console.log("User granted AIB purposes (TCFv1 spoofed from CCPA) = ", purposeStates );
       });
-
-      
       
     </script>
-    
   </head>
   <body>
     
@@ -161,13 +200,16 @@
     <p>
       This is a demo of the property theguardian.eteve.net in the sourcepoint account (setup for CCPA only).
     </p>
+    
     <p>
       <em>Note: Clear all this domain cookies to see the CCPA message banner again.</em>
     </p>
 
-    <p>
-      <a href="#" onClick="showPM(); return false;">Show Privacy Manager</a>
-    </p>
     
+    <ul>
+      <li><a href="#" onClick="showPM(); return false;">Show Privacy Manager</a></li>
+      <li><a href="#" onClick="deleteAllCookies(); return false;">Clear all cookies</a></li>
+    </ul>
+
 </boby>
 </html>
