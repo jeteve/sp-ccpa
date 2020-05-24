@@ -62,7 +62,7 @@
           // The callback settings for the config
           var events = {};
 
-          /* Not needed unless you want to better understand all the events.
+          // Not needed unless you want to better understand all the events.
            var genericCallback = function(eName){
            return function(){ console.log("CALLBACK "+ eName + " WITH:" , arguments); };
            }
@@ -74,10 +74,22 @@
            callbackEvents.forEach( (eName) => {
            events[eName] = genericCallback( eName );
            });
-          */
+          //
           // The specific events where the consent can change.
           // See https://documentation.sourcepoint.com/web-implementation/sourcepoint-set-up-and-configuration-v2/optional-callbacks
 
+          // Bug in SP. Cancel triggers two onConsentReady events..
+          /* 
+          events['onPMCancel'] = function(){
+              var original = events['onConsentReady'];
+              // Neuter the next onConsentReady event handler
+              // but allow to reinstall itself.
+              events['onConsentReady'] = function(){
+                  events['onConsentReady']  = original;
+              };
+          };
+          */
+          
           events['onMessageChoiceSelect'] = function(choice_id, choice_type_id){
               // Only consider acceptAll (11) or rejectAll(13).
               // Note that the action of saving from the privacy manager triggeras the onConsentReady instead.
