@@ -47,7 +47,7 @@
     
     <!-- Our config -->
     <script>
-      var consentType = 'ccpa';
+      var consentType = location.search.substr(1) || 'ccpa';
       
       var accountId = 1257;
 
@@ -57,7 +57,7 @@
 
           window._sp_ = {
               config: {
-                  mmsDomain: 'https://message' + accountId + '.sp-prod.net',
+                  mmsDomain: 'https://message.sp-prod.net',
                   wrapperAPIOrigin: "https://wrapper-api.sp-prod.net/tcfv2",
                   accountId,
                   propertyHref: 'http://theguardian.eteve.net',
@@ -149,8 +149,10 @@
       function showPM(){
           if( consentType === 'ccpa' ){
               window._sp_ccpa.loadPrivacyManagerModal(null, '5eba7ef78c167c47ca8b433d');
-          }else if ( consentType === 'tcvf2' ){
-              console.log("Woopsy , dont know how to show privacy manager.");
+          }else if ( consentType === 'tcfv2' ){
+              window._sp_.loadPrivacyManagerModal('145943');
+          }else {
+              console.log("Woopsy , unknown consent type.");
           }
       }
 
@@ -248,11 +250,16 @@
     </p>
     
     <p>
-      <em>Note: Clear all this domain cookies to see the CCPA message banner again.</em>
+      <em>Note: You need to clear all this domain cookies and relad the page to see the CCPA message banner again.</em>
     </p>
 
+    <p>
+      You are in <b><script>document.write(consentType)</script></b> mode.
+    </p>
     
     <ul>
+      <li><a href="?ccpa">Switch to <b>CCPA</b></a></li>
+      <li><a href="?tcfv2">Switch to <b>TCFv2</b></a></li>
       <li><a href="#" onClick="showPM(); return false;">Show Privacy Manager</a></li>
       <li><a href="#" onClick="deleteAllCookies(); return false;">Clear all cookies</a></li>
     </ul>
