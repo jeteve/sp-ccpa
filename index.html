@@ -42,6 +42,24 @@
           }
       }
 
+
+      // Where the callbacks receiving the TCFv2 data will live
+      window._gu_tcfv2 = { onConsent: [] };
+      function fetchTCFv2Data(){
+          // See https://github.com/InteractiveAdvertisingBureau/GDPR-Transparency-and-Consent-Framework/blob/master/TCFv2/IAB%20Tech%20Lab%20-%20CMP%20API%20v2.md#gettcdata
+          __tcfapi('getTCData', 2, (tcData, success) => {
+              console.log(tcData, success);
+              if(success) {
+                  // give the full tcData to the callback
+                  window._gu_tcfv2.onConsent.forEach( (cb) => {
+                      cb(tcData);
+                  });
+              }
+          }, []);
+          // ^^ Note we dont care about vendors IDs yet (only about the purposes), as we
+          // dont have specific vendors yet.
+      }
+      
     </script>
 
     
@@ -55,6 +73,27 @@
           // TCFv2 sourcepoint stub (see https://documentation.sourcepoint.com/web-implementation/sourcepoint-gdpr-and-tcf-v2-support-beta ) 
           (function () { var e = function () { var e, t = "__tcfapiLocator", a = [], n = window; for (; n;) { try { if (n.frames[t]) { e = n; break } } catch (e) { } if (n === window.top) break; n = n.parent } e || (!function e() { var a = n.document, r = !!n.frames[t]; if (!r) if (a.body) { var i = a.createElement("iframe"); i.style.cssText = "display:none", i.name = t, a.body.appendChild(i) } else setTimeout(e, 5); return !r }(), n.__tcfapi = function () { for (var e, t = arguments.length, n = new Array(t), r = 0; r < t; r++)n[r] = arguments[r]; if (!n.length) return a; if ("setGdprApplies" === n[0]) n.length > 3 && 2 === parseInt(n[1], 10) && "boolean" == typeof n[3] && (e = n[3], "function" == typeof n[2] && n[2]("set", !0)); else if ("ping" === n[0]) { var i = { gdprApplies: e, cmpLoaded: !1, cmpStatus: "stub" }; "function" == typeof n[2] && n[2](i) } else a.push(n) }, n.addEventListener("message", (function (e) { var t = "string" == typeof e.data, a = {}; try { a = t ? JSON.parse(e.data) : e.data } catch (e) { } var n = a.__tcfapiCall; n && window.__tcfapi(n.command, n.version, (function (a, r) { var i = { __tcfapiReturn: { returnValue: a, success: r, callId: n.callId } }; t && (i = JSON.stringify(i)), e.source.postMessage(i, "*") }), n.parameter) }), !1)) }; "undefined" != typeof module ? module.exports = e : e() })();
 
+
+          var events = {};
+          var genericCallback = function(eName){
+              return function(){ console.log("CALLBACK FROM TCFV2 "+ eName + " WITH:" , arguments); };
+          }
+          var callbackEvents = ['onMessageReady','onMessageChoiceSelect',
+                                'onMessageReceiveData','onMessageChoiceError',
+                                'onPrivacyManagerAction','onConsentReady', 'onPMCancel',
+                                'onSPPMObjectReady'];
+          // Generic event handling
+          //callbackEvents.forEach( (eName) => {
+          //    events[eName] = genericCallback( eName );
+          //});
+
+          events['onConsentReady'] = function(){
+              // Make sure the current event handler is all finished
+              // before looking in the TCFv2 data.
+              setTimeout(fetchTCFv2Data,0);
+          }
+          
+
           window._sp_ = {
               config: {
                   mmsDomain: 'https://message.sp-prod.net',
@@ -64,6 +103,7 @@
                   targetingParams: {
                       myctype: 'tcfv2'
                   },
+                  events,
               },
           };
           insertScript('https://gdpr-tcfv2.sp-prod.net/wrapperMessagingWithoutDetection.js');
@@ -82,13 +122,13 @@
 
           // Not needed unless you want to better understand all the events.
           var genericCallback = function(eName){
-              return function(){ console.log("CALLBACK "+ eName + " WITH:" , arguments); };
+              return function(){ console.log("CALLBACK FROM CCPA"+ eName + " WITH:" , arguments); };
           }
           var callbackEvents = ['onMessageReady','onMessageChoiceSelect',
                                 'onMessageReceiveData','onMessageChoiceError',
                                 'onPrivacyManagerAction','onConsentReady', 'onPMCancel',
                                 'onSPPMObjectReady'];
-          // Generic event handling
+          // Generic event handling (explore & debug)
           //callbackEvents.forEach( (eName) => {
           //    events[eName] = genericCallback( eName );
           //});
@@ -110,6 +150,7 @@
           
           events['onMessageChoiceSelect'] = function(choice_id, choice_type_id){
               // Only consider acceptAll (11) or rejectAll(13).
+              // ( see https://documentation.sourcepoint.com/web-implementation/sourcepoint-set-up-and-configuration-v2/optional-callbacks )
               // Note that the action of saving from the privacy manager triggeras the onConsentReady instead.
               console.log("RECEIVED onMessageChoiceSelect with choice_type_id = " + choice_type_id);
               if( choice_type_id === 11 ||
@@ -188,15 +229,20 @@
                   if( ccpaString.match(/^2.Y/gi) ){
                       // Opt-out => 
                       // Simulate denied consent to all purposes like in TCFv1 (in case
-                      // we want to avoid refactor)
-                      callback( [false, false, false, false, false, false] );
+                      // we want to avoid refactor), because we are nice.
+                      callback({1: false, 2: false, 3: false, 4: false, 5: false });
                   }else{
-                      // No optout. Consent is assumed (YaY CCPA!)
-                      callback( [true, true, true, true, true, true] );
+                      // No optout. Consent to everything is assumed (YaY CCPA!)
+                      callback({1: true, 2: true, 3: true, 4: true, 5: true });
                   }
               });
+          }else if( consentType === 'tcfv2' ){
+              window._gu_tcfv2.onConsent.push(function(tcData){
+                  callback( tcData.purpose.consents );
+              });
+
           }else{
-              console.log("WARN Unknown consent type in callback registration");
+              console.log("WARN cannot register callback. Unknown consent system");
           }
           
       }
@@ -218,8 +264,14 @@
                   }
               });
 
+          }else if( consentType === 'tcfv2' ){
+              window._gu_tcfv2.onConsent.push(function(tcData){
+                  // Lets assume purpose mapping as follow (to be extended if other purpose are needed in the client code):
+                  const purposeMap = { 'performance': 8 };
+                  callback( tcData.purpose.consents[ purposeMap[purpose] || 1 ] || false );
+              });
           }else{
-              console.log("WARN Unknown consent type in callback registration");
+              console.log("WARN cannot register callback. Unknown consent system");
           }
       }
       
@@ -231,38 +283,43 @@
 
       // Examples taken from third-party-tags.js (in frontend/commercial code).
       onGuConsentNotification('performance' , granted => {
-          console.log("User granted 'performance' (TCFv1 Spoofed from CCPA) = " , granted );
+          console.log("User granted 'performance' (TCFv1 Spoofed from " + consentType + " ) = " , granted );
           
       });
       
       onIabConsentNotification( purposeStates => {
-          console.log("User granted AIB purposes (TCFv1 spoofed from CCPA) = ", purposeStates );
+          console.log("User granted AIB purposes (TCFv1 spoofed from " + consentType + " ) = ", purposeStates );
       });
       
     </script>
   </head>
   <body>
     
-    <h1>Hello Brave CCPA world</h1>
+    <h1>Hello Brave SP CCPA &amp; TCFv2 world</h1>
 
     <p>
-      This is a demo of the property theguardian.eteve.net in the sourcepoint account (setup for CCPA only).
+      This is a demo of the property theguardian.eteve.net in the sourcepoint account (setup for CCPA AND TCFv2).
     </p>
+
+    <h2>
+          You are in <b><script>document.write(consentType)</script></b> mode.
+    </h2>
+
+    <h2>You can:</h2>
+    <ul>
+      <li><a href="?ccpa">Switch to <b>CCPA mode</b></a></li>
+      <li><a href="?tcfv2">Switch to <b>TCFv2 mode</b></a></li>
+      <li><a href="#" onClick="showPM(); return false;">Show Privacy Manager</a></li>
+      <li><a href="#" onClick="deleteAllCookies(); return false;">Clear all cookies</a></li>
+    </ul>
+
+
     
     <p>
       <em>Note: You need to clear all this domain cookies and relad the page to see the CCPA message banner again.</em>
     </p>
 
-    <p>
-      You are in <b><script>document.write(consentType)</script></b> mode.
-    </p>
-    
-    <ul>
-      <li><a href="?ccpa">Switch to <b>CCPA</b></a></li>
-      <li><a href="?tcfv2">Switch to <b>TCFv2</b></a></li>
-      <li><a href="#" onClick="showPM(); return false;">Show Privacy Manager</a></li>
-      <li><a href="#" onClick="deleteAllCookies(); return false;">Clear all cookies</a></li>
-    </ul>
+
 
 </boby>
 </html>
