@@ -283,12 +283,12 @@
 
       // Examples taken from third-party-tags.js (in frontend/commercial code).
       onGuConsentNotification('performance' , granted => {
-          console.log("User granted 'performance' (TCFv1 Spoofed from " + consentType + " ) = " , granted );
+          console.log("'onGuConsentNotification': User granted 'performance' (TCFv1 Spoofed from " + consentType + " ) = " , granted );
           
       });
       
       onIabConsentNotification( purposeStates => {
-          console.log("User granted AIB purposes (TCFv1 spoofed from " + consentType + " ) = ", purposeStates );
+          console.log("'onIabConsentNotification': User granted AIB purposes (TCFv1 spoofed from " + consentType + " ) = ", purposeStates );
       });
       
     </script>
