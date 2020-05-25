@@ -277,21 +277,22 @@
       
     </script>
 
+        <script>
+          // Consuming code.
+          // Examples taken from third-party-tags.js (in frontend/commercial code).
+          onGuConsentNotification('performance' , granted => {
+              console.log("'onGuConsentNotification': User granted 'performance' (TCFv1 Spoofed from " + consentType + " ) = " , granted );
+              document.getElementById('performanceDisplay').innerHTML = JSON.stringify(granted);
+          });
 
-    <script>
-      // Consuming code.
-
-      // Examples taken from third-party-tags.js (in frontend/commercial code).
-      onGuConsentNotification('performance' , granted => {
-          console.log("'onGuConsentNotification': User granted 'performance' (TCFv1 Spoofed from " + consentType + " ) = " , granted );
-          
-      });
-      
-      onIabConsentNotification( purposeStates => {
-          console.log("'onIabConsentNotification': User granted AIB purposes (TCFv1 spoofed from " + consentType + " ) = ", purposeStates );
-      });
+          onIabConsentNotification( purposeStates => {
+              console.log("'onIabConsentNotification': User granted AIB purposes (TCFv1 spoofed from " + consentType + " ) = ", purposeStates );
+              document.getElementById('purposeStateDisplay').innerHTML = JSON.stringify(purposeStates);
+          });
       
     </script>
+
+
   </head>
   <body>
     
@@ -304,6 +305,11 @@
     <h2>
           You are in <b><script>document.write(consentType)</script></b> mode.
     </h2>
+
+    <h3>The Purpose State (from onIabConsentNotification)  is:</h3>
+    <pre id="purposeStateDisplay" style="background: lightGray">-unknown-</pre>
+
+    <h3>The 'performance' consent (from onGuConsentNotification) is: <span  style="background: lightGray" id="performanceDisplay">null</span></h3>
 
     <h2>You can:</h2>
     <ul>
@@ -318,8 +324,6 @@
     <h2>
       <em>Note: Clear the cookies to see the banners again. Specially in CCPA mode</em>
     </h2>
-
-
 
 </boby>
 </html>
