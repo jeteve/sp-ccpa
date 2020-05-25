@@ -48,7 +48,7 @@
       function fetchTCFv2Data(){
           // See https://github.com/InteractiveAdvertisingBureau/GDPR-Transparency-and-Consent-Framework/blob/master/TCFv2/IAB%20Tech%20Lab%20-%20CMP%20API%20v2.md#gettcdata
           __tcfapi('getTCData', 2, (tcData, success) => {
-              console.log(tcData, success);
+              // console.log(tcData, success);
               if(success) {
                   // give the full tcData to the callback
                   window._gu_tcfv2.onConsent.forEach( (cb) => {
@@ -295,7 +295,7 @@
   </head>
   <body>
     
-    <h1>Hello Brave SP CCPA &amp; TCFv2 world</h1>
+    <h1>Hello Brave SP CCPA &amp; TCFv2 world (best viewed in Chrome)</h1>
 
     <p>
       This is a demo of the property theguardian.eteve.net in the sourcepoint account (setup for CCPA AND TCFv2).
